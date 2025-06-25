@@ -1,4 +1,4 @@
-
+import threading
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from langchain_community.tools import ArxivQueryRun, WikipediaQueryRun
@@ -78,4 +78,4 @@ def index():
     return render_template("index.html")
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False, port=5001)
+    app.run(debug=False, use_reloader=False, port=5001)
