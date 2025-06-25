@@ -4,6 +4,10 @@ flask-cors
 langchain
 langchain-community
 langgraph
+langchain-core
 langchain-groq
 yfinance
 python-dotenv
+arxiv
+wikipedia
+pydantic
