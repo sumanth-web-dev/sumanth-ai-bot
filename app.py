@@ -1,5 +1,7 @@
 import threading
-from flask import Flask, request, jsonify, render_template
+import requests
+import streamlit as st
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from langchain_community.tools import ArxivQueryRun, WikipediaQueryRun
 from langchain_community.utilities import ArxivAPIWrapper, WikipediaAPIWrapper
@@ -17,14 +19,16 @@ import yfinance as yf
 import os
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 groq_api_key = os.getenv("GROQ_API_KEY")
 tavily_api_key = os.getenv("TAVILY_API_KEY")
 
+# ---------------------- Flask App (API backend) ----------------------
 app = Flask(__name__)
 CORS(app)
 
-# LangChain Tools Setup
+# LangChain tool setup
 arxiv = ArxivQueryRun(api_wrapper=ArxivAPIWrapper(top_k_results=2))
 wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper(top_k_results=2))
 tavily = TavilySearchResults(api_key=tavily_api_key, top_k_results=2)
@@ -70,12 +74,29 @@ def chat():
     response = graph.invoke({"messages": memory.chat_memory.messages + [HumanMessage(content=user_message)]})
     assistant_message = response["messages"][-1].content
     memory.chat_memory.add_message(AIMessage(content=assistant_message))
-    return jsonify({"assistant_message": assistant_message})  # <-- fixed key here
+    return jsonify({"assistant_message": assistant_message})
 
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+# Run Flask server in background thread
+def run_flask():
+    app.run(port=5001, debug=False, use_reloader=False)
 
-if __name__ == "__main__":
-    app.run(debug=False, use_reloader=False, port=5001)
+# Start only once
+if "flask_started" not in st.session_state:
+    threading.Thread(target=run_flask, daemon=True).start()
+    st.session_state.flask_started = True
+
+# ---------------------- Streamlit UI ----------------------
+st.set_page_config(page_title="LangChain Chat", layout="centered")
+st.title("💬 LangChain Chat (Streamlit + Flask)")
+
+user_input = st.text_input("Enter your message:", "")
+
+if st.button("Send") and user_input:
+    try:
+        res = requests.post("http://localhost:5001/chat", json={"message": user_input})
+        assistant_message = res.json().get("assistant_message", "No response")
+        st.success("Assistant:")
+        st.write(assistant_message)
+    except Exception as e:
+        st.error(f"Error connecting to Flask server: {e}")
