@@ -1,0 +1,9 @@
+
+flask
+flask-cors
+langchain
+langchain-community
+langgraph
+langchain-groq
+yfinance
+python-dotenv
