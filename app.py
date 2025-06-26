@@ -1,7 +1,5 @@
-import threading
-import requests
-import streamlit as st
-from flask import Flask, request, jsonify
+
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from langchain_community.tools import ArxivQueryRun, WikipediaQueryRun
 from langchain_community.utilities import ArxivAPIWrapper, WikipediaAPIWrapper
@@ -18,17 +16,18 @@ from langgraph.graph.message import add_messages
 import yfinance as yf
 import os
 from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
 
-# Load environment variables
+
+
 load_dotenv()
 groq_api_key = os.getenv("GROQ_API_KEY")
 tavily_api_key = os.getenv("TAVILY_API_KEY")
 
-# ---------------------- Flask App (API backend) ----------------------
 app = Flask(__name__)
 CORS(app)
 
-# LangChain tool setup
+# LangChain Tools Setup
 arxiv = ArxivQueryRun(api_wrapper=ArxivAPIWrapper(top_k_results=2))
 wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper(top_k_results=2))
 tavily = TavilySearchResults(api_key=tavily_api_key, top_k_results=2)
@@ -67,36 +66,60 @@ builder.add_conditional_edges("tool_calling_llm", tools_condition)
 builder.add_edge("tools", "tool_calling_llm")
 graph = builder.compile()
 
+prompt_template = PromptTemplate.from_template(
+    """You are an intelligent AI assistant that helps users with their queries. 
+You carefully reason step by step before responding.
+
+Here is the conversation history so far:
+{history}
+
+Now, a new message has arrived from the user.
+
+User: {user_message}
+
+Please think through the problem step by step, explaining your reasoning clearly before providing a final answer.
+
+Respond in the following format:
+
+<thought>
+[Your step-by-step reasoning here]
+</thought>
+
+<answer>
+[Your final concise helpful answer here]
+</answer>
+"""
+)
+
 @app.route("/chat", methods=["POST"])
 def chat():
     user_message = request.json.get("message", "")
+
+
     memory.chat_memory.add_message(HumanMessage(content=user_message))
-    response = graph.invoke({"messages": memory.chat_memory.messages + [HumanMessage(content=user_message)]})
+
+    history = "\n".join(
+        f"{'User' if isinstance(m, HumanMessage) else 'Assistant'}: {m.content}"
+        for m in memory.chat_memory.messages
+    )
+
+
+    formatted_prompt = prompt_template.format(history=history, user_message=user_message)
+
+
+    response = graph.invoke({"messages": [HumanMessage(content=formatted_prompt)]})
+
     assistant_message = response["messages"][-1].content
+
+
     memory.chat_memory.add_message(AIMessage(content=assistant_message))
-    return jsonify({"assistant_message": assistant_message})
+
+    return jsonify({"assistant_message": assistant_message}) 
 
 
-# Run Flask server in background thread
-def run_flask():
-    app.run(port=5001, debug=False, use_reloader=False)
+@app.route("/")
+def index():
+    return render_template("index.html")
 
-# Start only once
-if "flask_started" not in st.session_state:
-    threading.Thread(target=run_flask, daemon=True).start()
-    st.session_state.flask_started = True
-
-# ---------------------- Streamlit UI ----------------------
-st.set_page_config(page_title="LangChain Chat", layout="centered")
-st.title("💬 LangChain Chat (Streamlit + Flask)")
-
-user_input = st.text_input("Enter your message:", "")
-
-if st.button("Send") and user_input:
-    try:
-        res = requests.post("http://localhost:5001/chat", json={"message": user_input})
-        assistant_message = res.json().get("assistant_message", "No response")
-        st.success("Assistant:")
-        st.write(assistant_message)
-    except Exception as e:
-        st.error(f"Error connecting to Flask server: {e}")
+if __name__ == "__main__":
+    app.run(debug=True)
