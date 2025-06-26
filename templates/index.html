@@ -260,7 +260,128 @@
         #showChatListBtn{
         display: none;
     }
+
     }
+
+    /* 1024px - Laptops/Tablets */
+@media (max-width: 1024px) {
+  .header-text h1 {
+    font-size: 1.1rem;
+  }
+  .header-text p {
+    font-size: 0.7rem;
+  }
+  .chat-history-item {
+    padding: 0.6rem;
+  }
+  .tool-chip {
+    font-size: 0.8rem;
+    padding: 0.45rem 0.9rem;
+  }
+}
+
+/* 768px - Tablets/Phablets */
+@media (max-width: 768px) {
+  .header-text h1 {
+    font-size: 1rem;
+  }
+  .header-text p {
+    display: none;
+  }
+  .chat-history-item {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+  .tool-chip {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
+  }
+  .input-container input {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+  }
+  .input-container button {
+    width: 35px;
+    height: 35px;
+  }
+  .status {
+    display: none;
+  }
+  .header-controls {
+    gap: 6px;
+  }
+}
+
+/* 480px - Phones */
+@media (max-width: 480px) {
+  .logo {
+    width: 36px;
+    height: 36px;
+  }
+  .logo i {
+    font-size: 1.2rem;
+  }
+  .chat-header {
+    padding: 0.75rem 1rem;
+  }
+  .header-text h1 {
+    font-size: 0.95rem;
+  }
+  .sidebar-title {
+    font-size: 0.9rem;
+  }
+  .chat-history-item {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+  .chat-history-item .chat-title {
+    max-width: 100px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .tool-chip {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.7rem;
+  }
+  .message {
+    max-width: 90%;
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+  }
+  .chat-footer {
+    padding: 0.5rem 1rem;
+  }
+  .status {
+    display: none;
+  }
+  .header-controls {
+    gap: 5px;
+  }
+}
+
+/* Sidebar chat title truncation at all widths */
+.chat-history-item .chat-title {
+  max-width: 150px;
+
+}
+@media (max-width: 480px) {
+  .chat-history-item .chat-title {
+    max-width: 100px;
+  }
+}
+
+/* Message max width adjustment for mobile */
+@media (max-width: 480px) {
+  .message {
+    max-width: 90%;
+  }
+}
+
+/* Optional: Sidebar smooth open/close on mobile */
+.sidebar {
+  transition: transform 0.3s ease, width 0.3s ease, padding 0.3s ease;
+}
+
 
     #sidebarToggle{
         display: none;
@@ -290,8 +411,8 @@
 <button class="icon-btn" id="showChatListBtn" title="Show Chat List" style="margin-right: 10px;"><i class="fas fa-bars"></i></button>
 <div class="logo"><i class="fas fa-robot"></i></div>
 <div class="header-text">
-<h1>AI Assistant Pro</h1>
-<p>Powered by Flask &amp; LangGraph</p>
+<h1>Agentic AI Assistant</h1>
+<p>Developed By &copy;Sumanth.</p>
 </div>
 <div class="header-controls">
 <div class="status">

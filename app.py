@@ -66,55 +66,14 @@ builder.add_conditional_edges("tool_calling_llm", tools_condition)
 builder.add_edge("tools", "tool_calling_llm")
 graph = builder.compile()
 
-prompt_template = PromptTemplate.from_template(
-    """You are an intelligent AI assistant that helps users with their queries. 
-You carefully reason step by step before responding.
-
-Here is the conversation history so far:
-{history}
-
-Now, a new message has arrived from the user.
-
-User: {user_message}
-
-Please think through the problem step by step, explaining your reasoning clearly before providing a final answer.
-
-Respond in the following format:
-
-<thought>
-[Your step-by-step reasoning here]
-</thought>
-
-<answer>
-[Your final concise helpful answer here]
-</answer>
-"""
-)
-
 @app.route("/chat", methods=["POST"])
 def chat():
     user_message = request.json.get("message", "")
-
-
     memory.chat_memory.add_message(HumanMessage(content=user_message))
-
-    history = "\n".join(
-        f"{'User' if isinstance(m, HumanMessage) else 'Assistant'}: {m.content}"
-        for m in memory.chat_memory.messages
-    )
-
-
-    formatted_prompt = prompt_template.format(history=history, user_message=user_message)
-
-
-    response = graph.invoke({"messages": [HumanMessage(content=formatted_prompt)]})
-
+    response = graph.invoke({"messages": memory.chat_memory.messages + [HumanMessage(content=user_message)]})
     assistant_message = response["messages"][-1].content
-
-
     memory.chat_memory.add_message(AIMessage(content=assistant_message))
-
-    return jsonify({"assistant_message": assistant_message}) 
+    return jsonify({"assistant_message": assistant_message})
 
 
 @app.route("/")
@@ -122,4 +81,4 @@ def index():
     return render_template("index.html")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True)
